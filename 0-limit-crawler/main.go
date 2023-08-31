@@ -10,40 +10,26 @@
 package main
 
 import (
-	"fmt"
-	"sync"
+	"context"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
-// Crawl uses `fetcher` from the `mockfetcher.go` file to imitate a
-// real crawler. It crawls until the maximum depth has reached.
-func Crawl(url string, depth int, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	if depth <= 0 {
-		return
-	}
-
-	body, urls, err := fetcher.Fetch(url)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	fmt.Printf("found: %s %q\n", url, body)
-
-	wg.Add(len(urls))
-	for _, u := range urls {
-		// Do not remove the `go` keyword, as Crawl() must be
-		// called concurrently
-		go Crawl(u, depth-1, wg)
-	}
-	return
-}
-
 func main() {
-	var wg sync.WaitGroup
+	const rateLimit = time.Second // 10 calls per second
+	ctx, cancel := context.WithCancel(context.Background())
 
-	wg.Add(1)
-	Crawl("http://golang.org/", 4, &wg)
-	wg.Wait()
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigs
+		log.Println("got interruption signal")
+		cancel()
+	}()
+
+	crawler := NewCrawler()
+	crawler.Crawl(ctx, rateLimit)
 }

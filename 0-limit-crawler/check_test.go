@@ -7,11 +7,12 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
 
-func TestMain(t *testing.T) {
+func TestCrawl(t *testing.T) {
 	fetchSig := fetchSignalInstance()
 
 	start := time.Unix(0, 0)
@@ -19,11 +20,12 @@ func TestMain(t *testing.T) {
 		for {
 			switch {
 			case <-fetchSig:
+				fmt.Printf("get fetchSig \n")
 				// Check if signal arrived earlier than a second (with error margin)
 				if time.Now().Sub(start).Nanoseconds() < 950000000 {
 					t.Log("There exists a two crawls that were executed less than 1 second apart.")
 					t.Log("Solution is incorrect.")
-					t.FailNow()
+					t.Fail()
 				}
 				start = time.Now()
 			}

@@ -19,6 +19,7 @@ type mockResult struct {
 
 // Fetch pretends to retrieve the URLs and its subpages
 func (f MockFetcher) Fetch(url string) (string, []string, error) {
+	fmt.Printf("fetchSignalInstance = true")
 	fetchSignalInstance() <- true
 	if res, ok := f[url]; ok {
 		return res.body, res.urls, nil
